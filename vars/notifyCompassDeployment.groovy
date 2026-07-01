@@ -4,6 +4,11 @@ def call(String compassCloudId,String componentId, String state, String environm
     try {
         def cloudId = compassCloudId
         def jobName = pipelineName
+        // Stable per-component identifier for the Compass event source. Using
+        // jobName/pipelineName here would create a new event source per branch
+        // or release version, and Compass caps components at 20 event sources
+        // (ATTACHED_EVENT_SOURCE_LIMIT_REACHED -> HTTP 409).
+        def eventSourceKey = componentId.tokenize('/').last()
 
         def envCategory = "DEVELOPMENT"
         if (environment.toLowerCase().contains("prod")) {
@@ -19,7 +24,7 @@ def call(String compassCloudId,String componentId, String state, String environm
                 passwordVariable: 'COMPASS_TOKEN'
             )
         ]) {
-            def payload = """{"cloudId":"${cloudId}","componentId":"${componentId}","event":{"deployment":{"updateSequenceNumber":${env.BUILD_NUMBER},"displayName":"${jobName} #${env.BUILD_NUMBER}","url":"${env.BUILD_URL}","lastUpdated":"${completedAt}","externalEventSourceId":"${jobName}-${environment}","description":"Deploy triggered from Jenkins","deploymentProperties":{"sequenceNumber":${env.BUILD_NUMBER},"state":"${state}","startedAt":"${startedAt}","completedAt":"${completedAt}","pipeline":{"pipelineId":"${jobName}","displayName":"${jobName}","url":"${env.BUILD_URL}"},"environment":{"environmentId":"${environment}","displayName":"${environment}","category":"${envCategory}"}}}}}"""
+            def payload = """{"cloudId":"${cloudId}","componentId":"${componentId}","event":{"deployment":{"updateSequenceNumber":${env.BUILD_NUMBER},"displayName":"${jobName} #${env.BUILD_NUMBER}","url":"${env.BUILD_URL}","lastUpdated":"${completedAt}","externalEventSourceId":"${eventSourceKey}-${environment}","description":"Deploy triggered from Jenkins","deploymentProperties":{"sequenceNumber":${env.BUILD_NUMBER},"state":"${state}","startedAt":"${startedAt}","completedAt":"${completedAt}","pipeline":{"pipelineId":"${jobName}","displayName":"${jobName}","url":"${env.BUILD_URL}"},"environment":{"environmentId":"${environment}","displayName":"${environment}","category":"${envCategory}"}}}}}"""
 
             def httpStatus = sh(script: """
                 curl -s -o /dev/null -w "%{http_code}" -X POST \

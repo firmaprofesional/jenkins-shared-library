@@ -3,10 +3,18 @@
 def call(String orgSlug, String projectSlug, String version, String environment, String startedAt, String completedAt, String pipelineName) {
     try {
         def sentryApiUrl = 'https://de.sentry.io'
-        def encodedVersion = URLEncoder.encode(version, 'UTF-8').replace('+', '%20')
+
+        // Sentry release versions can't contain "/". Callers often pass a branch
+        // name (e.g. "release/1.30") — by convention that's "<prefix>/<version>",
+        // so use the segment after the last "/" as the actual release version.
+        def sentryVersion = version.contains('/') ? version.tokenize('/').last() : version
+        if (sentryVersion != version) {
+            echo "Sentry release version derived from '${version}' -> '${sentryVersion}'"
+        }
+        def encodedVersion = URLEncoder.encode(sentryVersion, 'UTF-8').replace('+', '%20')
 
         withCredentials([string(credentialsId: 'SENTRY_AUTH_TOKEN', variable: 'SENTRY_AUTH_TOKEN')]) {
-            def releasePayload = """{"version":"${version}","projects":["${projectSlug}"]}"""
+            def releasePayload = """{"version":"${sentryVersion}","projects":["${projectSlug}"]}"""
 
             def releaseResponse = sh(script: """
                 curl -s -w "\\nHTTP_STATUS:%{http_code}" -X POST \

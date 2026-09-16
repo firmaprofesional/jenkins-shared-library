@@ -8,25 +8,27 @@ def call(String orgSlug, String projectSlug, String version, String environment,
         withCredentials([string(credentialsId: 'SENTRY_AUTH_TOKEN', variable: 'SENTRY_AUTH_TOKEN')]) {
             def releasePayload = """{"version":"${version}","projects":["${projectSlug}"]}"""
 
-            sh(script: """
-                curl -s -o /dev/null -w "%{http_code}" -X POST \
+            def releaseResponse = sh(script: """
+                curl -s -w "\\nHTTP_STATUS:%{http_code}" -X POST \
                 "${sentryApiUrl}/api/0/organizations/${orgSlug}/releases/" \
                 -H "Authorization: Bearer \$SENTRY_AUTH_TOKEN" \
                 -H "Content-Type: application/json" \
                 -d '${releasePayload}'
             """, returnStdout: true).trim()
 
+            echo "Sentry release create response: ${releaseResponse}"
+
             def deployPayload = """{"environment":"${environment}","name":"${pipelineName} #${env.BUILD_NUMBER}","url":"${env.BUILD_URL}","dateStarted":"${startedAt}","dateFinished":"${completedAt}"}"""
 
-            def httpStatus = sh(script: """
-                curl -s -o /dev/null -w "%{http_code}" -X POST \
+            def deployResponse = sh(script: """
+                curl -s -w "\\nHTTP_STATUS:%{http_code}" -X POST \
                 "${sentryApiUrl}/api/0/organizations/${orgSlug}/releases/${encodedVersion}/deploys/" \
                 -H "Authorization: Bearer \$SENTRY_AUTH_TOKEN" \
                 -H "Content-Type: application/json" \
                 -d '${deployPayload}'
             """, returnStdout: true).trim()
 
-            echo "Sentry deployment notified — HTTP ${httpStatus}"
+            echo "Sentry deploy create response: ${deployResponse}"
         }
     } catch (Exception e) {
         echo "Sentry notification failed (non-blocking): ${e.message}"

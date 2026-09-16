@@ -21,6 +21,7 @@ Jenkins Shared Library con utilidades reutilizables para pipelines de CI/CD.
 | `slackSendMessage` | `buildStatus`, `time` | Envía un mensaje a Slack con el resultado del build (SUCCESS / UNSTABLE / FAILURE) y el tiempo transcurrido. |
 | `notifyCompassDeployment` | `compassCloudId`, `componentId`, `state`, `environment`, `startedAt`, `completedAt`, `pipelineName` | Notifica un evento de despliegue al componente correspondiente en Atlassian Compass. Mapea automáticamente el entorno a `DEVELOPMENT`, `STAGING` o `PRODUCTION`. |
 | `notifyJiraDeployment` | `cloudId`, `componentId`, `state`, `environment`, `startedAt`, `completedAt`, `pipelineName` | Notifica un evento de despliegue a Jira Deployments API. Mapea el entorno a `development`, `staging` o `production`. |
+| `notifySentryDeployment` | `orgSlug`, `projectSlug`, `version`, `environment`, `startedAt`, `completedAt`, `pipelineName` | Crea (si no existe) el release en Sentry y registra un deploy asociado con entorno, fecha y enlace al build de Jenkins. `version` debe coincidir exactamente con el valor que envía el SDK como tag `release` (p. ej. `api_version` en el proyecto `api`). |
 
 ### Utilidades de Docker
 
@@ -33,6 +34,7 @@ Jenkins Shared Library con utilidades reutilizables para pipelines de CI/CD.
 Las funciones de notificación a Atlassian requieren las siguientes credenciales configuradas en Jenkins:
 
 - **`COMPASS_BASIC_AUTH`** — usuario y token de Atlassian (Basic Auth). Usado por `notifyCompassDeployment` y `notifyJiraDeployment`.
+- **`SENTRY_AUTH_TOKEN`** — Secret text con un token de Sentry (org `logalty`) con scope `project:releases`. Usado por `notifySentryDeployment`.
 
 ## Uso en Jenkinsfile
 
@@ -57,6 +59,15 @@ pipeline {
                     'your-cloud-id',
                     'ari:cloud:compass:...',
                     'SUCCESSFUL',
+                    'production',
+                    '2026-01-01T10:00:00Z',
+                    '2026-01-01T10:05:00Z',
+                    env.JOB_NAME
+                )
+                notifySentryDeployment(
+                    'logalty',
+                    'api',
+                    env.API_VERSION,
                     'production',
                     '2026-01-01T10:00:00Z',
                     '2026-01-01T10:05:00Z',

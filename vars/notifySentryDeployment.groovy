@@ -3,6 +3,7 @@
 def call(String orgSlug, String projectSlug, String version, String environment, String startedAt, String completedAt, String pipelineName) {
     try {
         def sentryApiUrl = 'https://de.sentry.io'
+        def encodedVersion = URLEncoder.encode(version, 'UTF-8').replace('+', '%20')
 
         withCredentials([string(credentialsId: 'SENTRY_AUTH_TOKEN', variable: 'SENTRY_AUTH_TOKEN')]) {
             def releasePayload = """{"version":"${version}","projects":["${projectSlug}"]}"""
@@ -19,7 +20,7 @@ def call(String orgSlug, String projectSlug, String version, String environment,
 
             def httpStatus = sh(script: """
                 curl -s -o /dev/null -w "%{http_code}" -X POST \
-                "${sentryApiUrl}/api/0/organizations/${orgSlug}/releases/${version}/deploys/" \
+                "${sentryApiUrl}/api/0/organizations/${orgSlug}/releases/${encodedVersion}/deploys/" \
                 -H "Authorization: Bearer \$SENTRY_AUTH_TOKEN" \
                 -H "Content-Type: application/json" \
                 -d '${deployPayload}'

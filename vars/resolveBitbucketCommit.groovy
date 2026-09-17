@@ -5,9 +5,9 @@
 // still deploy even if commit association can't be set up for this run.
 def call(String workspace, String repoSlug, String branch) {
     try {
-        withCredentials([string(credentialsId: 'BITBUCKET_API_TOKEN', variable: 'BITBUCKET_API_TOKEN')]) {
+        withCredentials([usernamePassword(credentialsId: 'bitbucket_token_read', usernameVariable: 'BITBUCKET_USER', passwordVariable: 'BITBUCKET_TOKEN')]) {
             def sha = sh(script: """
-                curl -s -u x-bitbucket-api-token-auth:\$BITBUCKET_API_TOKEN \
+                curl -s -u "\$BITBUCKET_USER:\$BITBUCKET_TOKEN" \
                 "https://api.bitbucket.org/2.0/repositories/${workspace}/${repoSlug}/refs/branches/${branch}" \
                 | grep -o '"hash":[ ]*"[0-9a-f]*"' | head -1 | grep -o '[0-9a-f]\\{40\\}'
             """, returnStdout: true).trim()

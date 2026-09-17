@@ -36,7 +36,7 @@ Las funciones de notificación a Atlassian requieren las siguientes credenciales
 
 - **`COMPASS_BASIC_AUTH`** — usuario y token de Atlassian (Basic Auth). Usado por `notifyCompassDeployment` y `notifyJiraDeployment`.
 - **`SENTRY_AUTH_TOKEN`** — Secret text con un token de Sentry (org `logalty`) con scope `project:releases`. Usado por `notifySentryDeployment`.
-- **`BITBUCKET_API_TOKEN`** — Secret text con un API token de Bitbucket (workspace `firmapro`), usado con el usuario `x-bitbucket-api-token-auth`. Usado por `resolveBitbucketCommit`.
+- **`bitbucket_token_read`** — Credencial Username/Password de Bitbucket (workspace `firmapro`), ya existente en Jenkins. Usada por `resolveBitbucketCommit`.
 
 ## Uso en Jenkinsfile
 

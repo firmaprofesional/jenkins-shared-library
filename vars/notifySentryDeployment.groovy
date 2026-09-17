@@ -1,6 +1,6 @@
 #!/usr/bin/env groovy
 
-def call(String orgSlug, String projectSlug, String version, String environment, String startedAt, String completedAt, String pipelineName) {
+def call(String orgSlug, String projectSlug, String version, String environment, String startedAt, String completedAt, String pipelineName, String commitSha = '', String repoSlug = '') {
     try {
         def sentryApiUrl = 'https://de.sentry.io'
 
@@ -14,7 +14,15 @@ def call(String orgSlug, String projectSlug, String version, String environment,
         def encodedVersion = URLEncoder.encode(sentryVersion, 'UTF-8').replace('+', '%20')
 
         withCredentials([string(credentialsId: 'SENTRY_AUTH_TOKEN', variable: 'SENTRY_AUTH_TOKEN')]) {
-            def releasePayload = """{"version":"${sentryVersion}","projects":["${projectSlug}"]}"""
+            // Optional: associate this release with the deployed commit so Sentry
+            // can show suspect commits on issues (requires the Bitbucket
+            // integration + repository mapping configured in Sentry).
+            def refsJson = ''
+            if (commitSha) {
+                def repo = repoSlug ?: projectSlug
+                refsJson = ""","refs":[{"repository":"firmapro/${repo}","commit":"${commitSha}"}]"""
+            }
+            def releasePayload = """{"version":"${sentryVersion}","projects":["${projectSlug}"]${refsJson}}"""
 
             def releaseResponse = sh(script: """
                 curl -s -w "\\nHTTP_STATUS:%{http_code}" -X POST \

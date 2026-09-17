@@ -7,7 +7,7 @@
 // still deploy even if commit association can't be set up for this run.
 def call(String workspace, String repoSlug, String ref) {
     try {
-        withCredentials([usernamePassword(credentialsId: 'bitbucket_token_read', usernameVariable: 'BITBUCKET_USER', passwordVariable: 'BITBUCKET_TOKEN')]) {
+        withCredentials([usernamePassword(credentialsId: 'bitbucket-check-version', usernameVariable: 'BITBUCKET_USER', passwordVariable: 'BITBUCKET_TOKEN')]) {
             def sha = fetchHash(workspace, repoSlug, 'branches', ref)
             if (!sha) {
                 sha = fetchHash(workspace, repoSlug, 'tags', ref)

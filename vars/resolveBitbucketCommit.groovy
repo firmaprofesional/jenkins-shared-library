@@ -33,6 +33,8 @@ def fetchHash(String workspace, String repoSlug, String kind, String ref) {
     def body = statusIdx >= 0 ? response.substring(0, statusIdx) : response
     def status = statusIdx >= 0 ? response.substring(statusIdx + 'HTTP_STATUS:'.length()).trim() : ''
 
+    echo "Bitbucket ${kind}/${ref} lookup -> HTTP ${status}: ${body.take(300)}"
+
     if (status != '200') {
         return ''
     }
